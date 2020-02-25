@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding ="UTF-8"?>
+<launch>
+	<include file="$(find px4)/launch/mavros_posix_sitl.launch">
+		    <arg name="vehicle" value="iris" />
+	</include>		 
+	<node pkg="control" type="controller" name="controller"/>
+	<node pkg="frame" type="img_con" name="img_con"/>
+</launch>

@@ -4,11 +4,14 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <frame/dc.h>
 
 static const std::string OPENCV_WINDOW = "Image window";
 static const std::string OPENCV_WINDOW_MOD = "Processed";
-
-
+float F = (145*4.13)/1.33;
+float W = 1.33;
+float d=10;
+std::string topic;int rate;
 const int max_lowThreshold =100;
 int lowThreshold = 60;
 int upperThreshold = 150;
@@ -75,7 +78,7 @@ public:
 
     for(int i=0;i<contours.size();i+=1)
     {
-        if(cv::contourArea(contours[i])>100 && cv::contourArea(contours[i])<min_area)
+        if(cv::contourArea(contours[i])>200 && cv::contourArea(contours[i])<min_area)
         {
             if(better_contours.empty())
             {
@@ -121,6 +124,9 @@ public:
               ly= (approx[0].y + approx[1].y)/2 + 20;
               cv::putText(mc, std::to_string(length), cv::Point(lx,ly), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(200,200,200));
               cv::circle(mc, cv::Point(400, 400), 7, cv::Scalar(0,255,255),2);
+              d = (W*F)/length;
+              cv::putText(mc, std::to_string(d), cv::Point(100,100), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(0,0,255));
+
             }
     }
 
@@ -135,10 +141,26 @@ public:
   }
 };
 
+
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "image_converter");
+  ros::init(argc,argv, "image_converter");
   ImageConverter ic;
-  ros::spin();
+  ros::NodeHandle nh;
+  nh.getParam("topic",topic);
+  nh.getParam("rate",rate);
+  ros::Publisher pub = nh.advertise<frame::dc>(topic,10);
+  ros::Rate loopRate(rate);
+  while(ros::ok()){
+    frame::dc msg;
+    msg.x =x;
+    msg.y =y; 
+    msg.d =d; 
+
+    pub.publish(msg);
+    loopRate.sleep();
+
+    ros::spinOnce();
+  }
   return 0;
 }

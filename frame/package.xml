@@ -67,6 +67,13 @@
   <exec_depend>opencv2</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <depend>eigen_conversions</depend>
+  <depend>message_generation</depend>
+  <depend>message_runtime</depend>
+  <depend>mavros_msgs</depend>
+  <depend>tf</depend>
+  <depend>tf_conversions</depend>
+  <depend>dynamic_reconfigure</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

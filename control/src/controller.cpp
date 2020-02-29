@@ -18,7 +18,7 @@ int main(int argc, char** argv){
     //ros::Subscriber local_pos = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose",10,local_position);
     ros::ServiceClient arming = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     ros::ServiceClient mode = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
-    ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
+    //ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
 
     ros::Rate rate(20.0);
 
@@ -28,17 +28,17 @@ int main(int argc, char** argv){
         rate.sleep();
     }
 
-    geometry_msgs::PoseStamped pose;
-    pose.pose.position.x=0;
-    pose.pose.position.y=0;
-    pose.pose.position.z=2;
+    // geometry_msgs::PoseStamped pose;
+    // pose.pose.position.x=0;
+    // pose.pose.position.y=0;
+    // pose.pose.position.z=2;
     
-    int c=100;
-    for (c=100;ros::ok() && c>0;c--){
-        pub.publish(pose);
-        ros::spinOnce();
-        rate.sleep();
-    }
+    // int c=100;
+    // for (c=100;ros::ok() && c>0;c--){
+    //     pub.publish(pose);
+    //     ros::spinOnce();
+    //     rate.sleep();
+    // }
 
     mavros_msgs::SetMode offboard;
     offboard.request.custom_mode = "OFFBOARD";
@@ -72,8 +72,8 @@ int main(int argc, char** argv){
     //     i++;
     // }
     
-    pub.publish(pose);
-    j++;
+    //pub.publish(pose);
+    // j++;
     
     ros::spinOnce();
     rate.sleep();
@@ -81,7 +81,7 @@ int main(int argc, char** argv){
 
     
     return 0;
- 
+    
 
 
 }

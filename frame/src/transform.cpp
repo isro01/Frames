@@ -9,6 +9,8 @@
 
 float x,y,d;
 bool height=false;
+float thresh;
+float glob_x,glob_y;
 geometry_msgs::PoseStamped pose;
 geometry_msgs::PoseStamped l_pose;
 std::string topic; int rate;
@@ -95,15 +97,30 @@ int main(int argc, char** argv){
         Eigen::Vector3d quadCoord = (CamtoQuad * scaleUp * invCamMatrix * imgVec) /*+ tCam*/;
         Eigen::Vector3d globCoord = quadToGlob * quadCoord;
 
-        pose.pose.position.x=globCoord.x();
-        pose.pose.position.y=globCoord.y();
-        pose.pose.position.z=2;
         if(!height)
         {
             pose.pose.position.x=0;
             pose.pose.position.y=0;
             pose.pose.position.z=2;
         }
+        else
+        {
+            if (globCoord.x()>=3.5 && globCoord.x() <=5 && globCoord.y()<=1 && globCoord.y()>=-1)
+            {
+                pose.pose.position.x=globCoord.x();
+                pose.pose.position.y=globCoord.y();
+                pose.pose.position.z=2;
+                glob_x = globCoord.x();
+                glob_y = globCoord.y();
+            }
+            else
+            {
+                pose.pose.position.x=glob_x;
+                pose.pose.position.y=glob_y;
+                pose.pose.position.z=2;
+            }
+        }
+        
         std::cout << height<<"Pos"<< pose <<std::endl;
 
         pub.publish(pose);

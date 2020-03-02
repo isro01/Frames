@@ -78,7 +78,7 @@ public:
 
     for(int i=0;i<contours.size();i+=1)
     {
-        if(cv::contourArea(contours[i])>200 && cv::contourArea(contours[i])<min_area)
+        if(cv::contourArea(contours[i])>250 && cv::contourArea(contours[i])<min_area)
         {
             if(better_contours.empty())
             {

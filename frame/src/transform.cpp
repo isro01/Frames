@@ -9,7 +9,8 @@
 
 float x,y,d;
 bool height=false;
-float thresh;
+float final_y;
+int flag=0;
 float glob_x,glob_y;
 geometry_msgs::PoseStamped pose;
 geometry_msgs::PoseStamped l_pose;
@@ -31,9 +32,9 @@ void nav_cb(const nav_msgs::Odometry &msg)
 void mav_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
          l_pose = *msg;
-        if(l_pose.pose.position.z>=1.8)
+        if(l_pose.pose.position.z>=1)
             height = true;
-        std::cout<<height<<std::endl;
+       // std::cout<<height<<std::endl;
 }
 
 int main(int argc, char** argv){
@@ -97,32 +98,70 @@ int main(int argc, char** argv){
         Eigen::Vector3d quadCoord = (CamtoQuad * scaleUp * invCamMatrix * imgVec) /*+ tCam*/;
         Eigen::Vector3d globCoord = quadToGlob * quadCoord;
 
+        if (x <=470 && x>=300 ){
+            flag=1;
+        }
+
         if(!height)
         {
-            pose.pose.position.x=0;
-            pose.pose.position.y=0;
-            pose.pose.position.z=2;
+            pose.pose.position.x=-1;
+            pose.pose.position.y=1;
+            pose.pose.position.z=1.2;
         }
+        //  else
+        //  {
+        //      if (globCoord.x()>=3 && globCoord.x() <=7 /*&& globCoord.y()<=0.75 && globCoord.y()>=-1*/)
+        //      {
+        //          pose.pose.position.x=globCoord.x() ;
+        //         pose.pose.position.y=globCoord.y();
+        //          pose.pose.position.z=1.9;
+        //          glob_x = globCoord.x();
+        //          glob_y = globCoord.y();
+        //     }
+        //      else
+        //      {
+        //          pose.pose.position.x=glob_x ;
+        //          pose.pose.position.y=glob_y;
+        //          pose.pose.position.z=1.9;
+        //      }
+        //  }
+
         else
         {
-            if (globCoord.x()>=3.5 && globCoord.x() <=5 && globCoord.y()<=1 && globCoord.y()>=-1)
-            {
-                pose.pose.position.x=globCoord.x();
-                pose.pose.position.y=globCoord.y();
-                pose.pose.position.z=2;
-                glob_x = globCoord.x();
-                glob_y = globCoord.y();
+            if (flag==0 && height == true){
+                pose.pose.position.y = l_pose.pose.position.y-1;
+                final_y = l_pose.pose.position.y-1;
             }
-            else
-            {
-                pose.pose.position.x=glob_x;
-                pose.pose.position.y=glob_y;
-                pose.pose.position.z=2;
+            else if (flag==1){
+                if(globCoord.x()>=3 && globCoord.x()<=7 )
+                {
+                    pose.pose.position.x = globCoord.x();
+                    pose.pose.position.y = globCoord.y();
+                    glob_x = globCoord.x();
+                    glob_y = globCoord.y();
+                    height=false;
+                }
+                else{
+                    pose.pose.position.x=glob_x + 0.2 ;
+                    pose.pose.position.y=glob_y;
+                    pose.pose.position.z=1.2;
+                }
+
+                // if(globCoord.x()<=10)
+                // {
+                //     pose.pose.position.x = globCoord.x();
+                //     pose.pose.position.y = globCoord.y();
+                // }
+
             }
         }
         
-        std::cout << height<<"Pos"<< pose <<std::endl;
-
+        
+         std::cout << height<<"Pos"<< pose <<std::endl;
+         std::cout <<  "flag  "<< flag<<std::endl;
+         std::cout << "y " << l_pose.pose.position.y <<std::endl;
+         std::cout << "global x " << globCoord.x() << "  global y " << globCoord.y() <<std::endl;
+        //std::cout << "x: "<< x << "y: "<<y<<std::endl;
         pub.publish(pose);
         ros::spinOnce();
         loopRate.sleep();

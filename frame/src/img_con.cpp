@@ -13,8 +13,8 @@ float W = 1.33;
 float d=10;
 std::string topic;int rate;
 const int max_lowThreshold =100;
-int lowThreshold = 60;
-int upperThreshold = 150;
+int lowThreshold = 255/3;
+int upperThreshold = 255;
 const int ratio =3;
 const int kernel_size =3;
 float x=0;
@@ -60,9 +60,14 @@ public:
     }
 
     cv::Mat original = cv_ptr->image;
-    cv::Mat src;
+    cv::Mat src,hsv;
     cv::GaussianBlur( original, src, cv::Size(3,3),0,0);
-    cv::cvtColor(src,src,CV_BGR2GRAY);
+    cv::cvtColor(src,hsv,CV_BGR2HSV);
+    cv::inRange(hsv, cv::Scalar(160,0,0), cv::Scalar(180, 255, 255), src);
+
+    cv::dilate(src,src, cv::Mat(), cv::Point(-1,-1), 2, 1,1);
+    cv::erode(src,src, cv::Mat(), cv::Point(-1,-1), 2, 1, 1);
+
     cv::Canny(src, src, lowThreshold, upperThreshold, kernel_size);
 
     cv::Mat mc = cv::Mat::zeros(src.size(), CV_8UC3);
@@ -71,6 +76,9 @@ public:
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy;
     std::vector<cv::Point> approx;
+
+    //cv::dilate(src,src, cv::Mat(), cv::Point(-1,-1), 2, 1,1);
+    //cv::erode(src,src, cv::Mat(), cv::Point(-1,-1), 2, 1, 1);
 
     cv::findContours(src, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
@@ -98,25 +106,34 @@ public:
     {
         x=0;
         y=0;
-        cv::approxPolyDP(better_contours[i],approx, 0.2*cv::arcLength(contours[i], true), true);
+        float tempx=0;
+        float tempy=0;
+
+        cv::approxPolyDP(better_contours[i],approx, cv::arcLength(contours[i], true), true);
         int size = approx.size();
             for(int j=0;j<size;j+=1)
             {
                 cv::circle(mc, approx[j], 3, cv::Scalar(0,255,0),-1);
                 cv::putText(mc, std::to_string(j), cv::Point(approx[j].x, approx[j].y), CV_FONT_HERSHEY_PLAIN, 3, cv::Scalar(0,0,255));
-                x= x+approx[j].x;
-                y= y+approx[j].y;
-            }
-            x=x/size;
-            y=y/size;
 
-            cv::circle(mc, cv::Point(x,y), 6, cv::Scalar(0,0,255), -1);
-            cv::putText(mc, std::to_string(x)+ "," + std::to_string(y), cv::Point(x,y), CV_FONT_HERSHEY_PLAIN, 3, cv::Scalar(0,255,0));
+            }
+
+            
             int length=0;
 
             
-            if(approx.size()>=4)
+            if(approx.size()==4)
             {
+              x=0;
+              y=0;
+              for(int k=0;k<size;k+=1)
+              {
+                x =x+ approx[k].x;
+                y= y+approx[k].y;
+              }
+              x=x/size;
+              y=y/size;
+              
               length =abs(approx[0].x -approx[1].x);
               cv::line(mc, approx[0], approx[1], cv::Scalar(255,0,0), 2);
               int lx,ly;
@@ -124,11 +141,19 @@ public:
               ly= (approx[0].y + approx[1].y)/2 + 20;
               cv::putText(mc, std::to_string(length), cv::Point(lx,ly), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(200,200,200));
               cv::circle(mc, cv::Point(400, 400), 7, cv::Scalar(0,255,255),2);
-              d = (W*F)/length;
-              cv::putText(mc, std::to_string(d), cv::Point(100,100), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(0,0,255));
+              cv::putText(mc, std::to_string(size), cv::Point(100,200), CV_FONT_HERSHEY_PLAIN, 1 ,cv::Scalar(255,255,255));
 
+              cv::circle(mc, cv::Point(x,y), 6, cv::Scalar(0,0,255), -1);
+              cv::putText(mc, std::to_string(x)+ "," + std::to_string(y), cv::Point(x,y), CV_FONT_HERSHEY_PLAIN, 3, cv::Scalar(0,255,0));
+
+              d = (W*F)/length;
+              //cv::putText(mc, std::to_string(d), cv::Point(100,100), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(0,0,255));
+               cv::putText(mc, std::to_string(d), cv::Point(100,100), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(0,0,255));
             }
+
+            
     }
+  
 
 
     // Update GUI Window

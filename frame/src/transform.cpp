@@ -9,6 +9,7 @@
 
 float x,y,d;
 bool height=false;
+char dir;
 float final_y;
 int flag=0;
 float glob_x,glob_y;
@@ -34,6 +35,7 @@ void mav_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
          l_pose = *msg;
         if(l_pose.pose.position.z>=1)
             height = true;
+        else height = false;
        // std::cout<<height<<std::endl;
 }
 
@@ -74,6 +76,13 @@ int main(int argc, char** argv){
     CamtoQuad(2,1) = 0;
     CamtoQuad(2,2) = 0;
 
+    // if(x>340){
+    //     dir='L';
+    // }
+    // else if (x<320){
+    //     dir='R';
+    // }
+
     invCamMatrix = CamMatrix.inverse();
     ros::Rate loopRate(rate);
     while(ros::ok()){
@@ -98,14 +107,14 @@ int main(int argc, char** argv){
         Eigen::Vector3d quadCoord = (CamtoQuad * scaleUp * invCamMatrix * imgVec) /*+ tCam*/;
         Eigen::Vector3d globCoord = quadToGlob * quadCoord;
 
-        if (x <=470 && x>=300 ){
+        if (x <=340 && x>=320 ){
             flag=1;
         }
 
         if(!height)
         {
             pose.pose.position.x=-1;
-            pose.pose.position.y=1;
+            pose.pose.position.y= 1;
             pose.pose.position.z=1.2;
         }
         //  else
@@ -128,21 +137,30 @@ int main(int argc, char** argv){
 
         else
         {
-            if (flag==0 && height == true){
+            if (flag==0){
+                pose.pose.position.x = l_pose.pose.position.x;
                 pose.pose.position.y = l_pose.pose.position.y-1;
+                pose.pose.position.z = 1.2;
                 final_y = l_pose.pose.position.y-1;
             }
+            // if (flag==0 && dir=='R'){
+            //     pose.pose.position.x = l_pose.pose.position.x;
+            //     pose.pose.position.y = l_pose.pose.position.y+1;
+            //     pose.pose.position.z = 1.2;
+            //     final_y = l_pose.pose.position.y+1;
+            // }
             else if (flag==1){
-                if(globCoord.x()>=3 && globCoord.x()<=7 )
+                if(globCoord.x()<10)
                 {
                     pose.pose.position.x = globCoord.x();
                     pose.pose.position.y = globCoord.y();
+                    pose.pose.position.z=1.2;
                     glob_x = globCoord.x();
                     glob_y = globCoord.y();
-                    height=false;
+                    
                 }
                 else{
-                    pose.pose.position.x=glob_x + 0.2 ;
+                    pose.pose.position.x=glob_x + 2 ;
                     pose.pose.position.y=glob_y;
                     pose.pose.position.z=1.2;
                 }
@@ -157,11 +175,12 @@ int main(int argc, char** argv){
         }
         
         
-         std::cout << height<<"Pos"<< pose <<std::endl;
-         std::cout <<  "flag  "<< flag<<std::endl;
-         std::cout << "y " << l_pose.pose.position.y <<std::endl;
-         std::cout << "global x " << globCoord.x() << "  global y " << globCoord.y() <<std::endl;
-        //std::cout << "x: "<< x << "y: "<<y<<std::endl;
+        //  std::cout << height<<"Pos"<< pose <<std::endl;
+         std::cout <<  "flag  "<< flag ;
+         std::cout << "height "<< height <<std::endl;
+        //  std::cout << "y " << l_pose.pose.position.y <<std::endl;
+        //  std::cout << "global x " << globCoord.x() << "  global y " << globCoord.y() <<std::endl;
+        std::cout << "x: "<< x << "y: "<<y<<std::endl;
         pub.publish(pose);
         ros::spinOnce();
         loopRate.sleep();

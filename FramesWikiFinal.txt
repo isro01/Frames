@@ -1,0 +1,65 @@
+\\\OVERVIEW OF PROJECT///
+
+PASSING THROUGH FRAMES
+
+A quad has to pass through frames autonomoulsy by using computer vision correcting its flight path along the way. The eventual complexities involve skewed frames, multiple frames, varied lighting conditions.
+
+OVERVIEW:
+
+Offboarding and Initial positioning: A node to put the quad into offboard mode and takeoff 
+
+CV Bridge: A node creating the cv bridge allowing link between opencv and ros
+
+Detecting:  Node for detection of frame and outputting the coordinates of the smallest contour wrt camera view and depth from frame to quad.
+
+Tranformation: Using matrix transformations to convert the coordinates aquired from detection to global coordinates by changing the respective frames. 
+
+Control: Using the global coordinates to publish setpoints accordingly to correct the flight path while moving forward.
+
+DEPENDENCIES:
+
+->roscpp
+->mavros_msgs
+->geometry_msgs
+->message_generation
+->cv_bridge
+->image_transport
+->sensor_msgs
+->tf
+->tf_conversions
+->dynamic_reconfigure
+->message_runtime
+->opencv2
+->eigen3
+->GeographicLib
+
+MAJOR PROBLMES FACED :
+
+-> Setting up the camera for the quad and finding its camera_head yaml file
+
+-> Choosing hsv cv detection over bnw cv detection
+
+->CONTROL THEORY – To make the drone pass the frame and using the global coordinates wisely (under appropriate conditions) and using proper data filtering.
+
+->Making the cv code and control theory part more robust and generic to aid in continuing the project by increasing complexity by skewing up the frame and using multiple frames.
+
+-> linking workspaces together:  source the main workspace( ros_ws) in the new workspace created for the project. Also add the source commands in the bashrc file.
+
+Source ~/ros_ws/devel/setup.bash
+
+-> Launching camera with the drone 
+
+-> Proper detection of the frame 
+
+The initial detection of the frame is made more reliable by using detection based on colour (in a HSV image) rather than a BnW image.
+Trial and error process to fine-tune the parameters of cv::approxPolyDP() to get a best-fit quadrilateral of the frame.
+
+-> Approximation of distance from frame
+
+A simple idea of Similarity of Triangles was used to measure distnace from frame, using the apparent side-length of the frame in the image.
+ 
+
+-> Some irregularities occur in the cv processed image under different lighting conditions which are bound to occur in outdoors.
+
+-> Linking the geographicLib.cmake and eigen.cmake file porperly 
+

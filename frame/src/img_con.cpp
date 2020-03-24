@@ -60,105 +60,79 @@ public:
     }
 
     cv::Mat original = cv_ptr->image;
-    cv::Mat src,hsv;
-    cv::GaussianBlur( original, src, cv::Size(3,3),0,0);
-    cv::cvtColor(src,hsv,CV_BGR2HSV);
-    cv::inRange(hsv, cv::Scalar(160,0,0), cv::Scalar(180, 255, 255), src);
-
-    cv::dilate(src,src, cv::Mat(), cv::Point(-1,-1), 2, 1,1);
-    cv::erode(src,src, cv::Mat(), cv::Point(-1,-1), 2, 1, 1);
-
-    cv::Canny(src, src, lowThreshold, upperThreshold, kernel_size);
-
-    cv::Mat mc = cv::Mat::zeros(src.size(), CV_8UC3);
-
-    std::vector<std::vector<cv::Point>> better_contours;
-    std::vector<std::vector<cv::Point>> contours;
+    cv::Mat img;
+    std::vector<std::vector<cv::Point>> contours, good_contours_;
     std::vector<cv::Vec4i> hierarchy;
-    std::vector<cv::Point> approx;
 
-    //cv::dilate(src,src, cv::Mat(), cv::Point(-1,-1), 2, 1,1);
-    //cv::erode(src,src, cv::Mat(), cv::Point(-1,-1), 2, 1, 1);
+    //Thresholding
+    cv::GaussianBlur( img, img, cv::Size(3,3), 0, 0 );
+    cv::cvtColor( img, img, CV_BGR2HSV);
+    cv::inRange( img, cv::Scalar(100,110,110), cv::Scalar(179,255,255),img);
+    //cv::inRange(img, cv::Scalar(0,0,0), cv::Scalar(30,30,30), img);
+    cv::dilate( img, img, cv::Mat(), cv::Point(-1,-1), 2, 1, 1);
+    cv::erode( img ,img, cv::Mat(), cv::Point(-1,-1), 2, 1, 1);
 
-    cv::findContours(src, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
-    double min_area=1000000;
+    //find Good contours
+    cv::Canny(img , img, 200, 300 , 3);
+    cv::findContours(img, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+    
+    std::vector<std::vector<cv::Point>>::iterator ptr = contours.begin();
+    std::vector<std::vector<cv::Point>>::iterator end = contours.end();
+    std::cout<<contours.size()<<std::endl;
 
-    for(int i=0;i<contours.size();i+=1)
+    for(ptr;ptr!=end;++ptr)
     {
-        if(cv::contourArea(contours[i])>250 && cv::contourArea(contours[i])<min_area)
-        {
-            if(better_contours.empty())
-            {
-                better_contours.push_back(contours[i]);
-                min_area = cv::contourArea(contours[i]);
-            }
-            else
-            {
-                better_contours.clear();
-                better_contours.push_back(contours[i]);
-                min_area = cv::contourArea(contours[i]);
-            }   
+        if(cv::contourArea(*ptr)>250){
+            good_contours_.push_back(*ptr);
         }
+    } 
+    cv::Mat test = cv::Mat::zeros(img.size(), CV_8UC3);
+    int size = good_contours_.size();
+    int i=0;
+    for(i;i<size;i+=1){
+        cv::drawContours(test,good_contours_, i,cv::Scalar(0,255,255));
     }
+    cv::putText(test, std::to_string(i), cv::Point(100,100),CV_FONT_HERSHEY_PLAIN, 2, cv::Scalar(255,255,255),1);
 
-    for(int i=0; i<better_contours.size(); i+=1)
+
+    //Frame Frame Centre
+
+    int size, length, x, y, k;
+    std::vector<cv::Point> approx;
+    std::cout<<good_contours_.size()<<std::endl;
+    for( i=0; i<good_contours_.size(); i+=1)
     {
-        x=0;
-        y=0;
-        float tempx=0;
-        float tempy=0;
-
-        cv::approxPolyDP(better_contours[i],approx, cv::arcLength(contours[i], true), true);
-        int size = approx.size();
-            for(int j=0;j<size;j+=1)
+        cv::approxPolyDP(good_contours_[i],approx, 0.02*cv::arcLength(good_contours_[i], true), true);
+        size = approx.size();
+        std::cout<<size<<std::endl;
+        length =0;
+        if(1)
+        {
+            x=0;
+            y=0;
+            std::cout<<"good"<<i<<std::endl;
+            for(k=0;k<size;k+=1)
             {
-                cv::circle(mc, approx[j], 3, cv::Scalar(0,255,0),-1);
-                cv::putText(mc, std::to_string(j), cv::Point(approx[j].x, approx[j].y), CV_FONT_HERSHEY_PLAIN, 3, cv::Scalar(0,0,255));
-
+                std::cout<<"Inside good"<<i<<std::endl;
+                x = x + approx[k].x;
+                y = y + approx[k].y;
+                cv::circle(img,cv::Point(approx[k].x, approx[k].y),4,cv::Scalar(255, 255, 255),-1);
+                cv::putText(img,std::to_string(i),approx[k], CV_FONT_HERSHEY_PLAIN,4,cv::Scalar(255,255,255));
             }
-
-            
-            int length=0;
-
-            
-            if(approx.size()==4)
-            {
-              x=0;
-              y=0;
-              for(int k=0;k<size;k+=1)
-              {
-                x =x+ approx[k].x;
-                y= y+approx[k].y;
-              }
-              x=x/size;
-              y=y/size;
-              
-              length =abs(approx[0].x -approx[1].x);
-              cv::line(mc, approx[0], approx[1], cv::Scalar(255,0,0), 2);
-              int lx,ly;
-              lx= (approx[0].x + approx[1].x)/2;
-              ly= (approx[0].y + approx[1].y)/2 + 20;
-              cv::putText(mc, std::to_string(length), cv::Point(lx,ly), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(200,200,200));
-              cv::circle(mc, cv::Point(400, 400), 7, cv::Scalar(0,255,255),2);
-              cv::putText(mc, std::to_string(size), cv::Point(100,200), CV_FONT_HERSHEY_PLAIN, 1 ,cv::Scalar(255,255,255));
-
-              cv::circle(mc, cv::Point(x,y), 6, cv::Scalar(0,0,255), -1);
-              cv::putText(mc, std::to_string(x)+ "," + std::to_string(y), cv::Point(x,y), CV_FONT_HERSHEY_PLAIN, 3, cv::Scalar(0,255,0));
-
-              d = (W*F)/length;
-              //cv::putText(mc, std::to_string(d), cv::Point(100,100), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(0,0,255));
-               cv::putText(mc, std::to_string(d), cv::Point(100,100), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(0,0,255));
-            }
-
-            
+            x = x/size;
+            y = y/size;
+            length = abs(approx[0].x - approx[1].x);
+            cv::circle(test,cv::Point(x,y),5,cv::Scalar(0,0,255),-1);
+            cv::putText(test)
+        }
     }
   
 
 
     // Update GUI Window
-    cv::imshow(OPENCV_WINDOW, src);
-    cv::imshow(OPENCV_WINDOW_MOD, mc);
+    cv::imshow(OPENCV_WINDOW, img);
+    cv::imshow(OPENCV_WINDOW_MOD, test);
     cv::waitKey(3);
 
     // Output modified video stream

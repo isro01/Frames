@@ -13,7 +13,7 @@ This package has the following dependencies:
 
 1. [OpenCV](https://opencv.org) 
 2. [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
-3. ROS Kinetic with the following packages:
+3. ROS Melodic with the following packages:
 
     1. catkin
     2. roscpp
@@ -52,3 +52,35 @@ Build using ``` catkin build Frames``` after making sure all the dependencies ar
 -> **img_con** : has the cv_bridge and image processing algorithms.
 
 -> **transform** : publishing pose to the quad using camera matrix.
+
+---
+# Topics
+1.**controller node** : 
+
+    Subscribed:
+    
+         /state
+   
+    Published:
+
+        /setpoint_position/local
+2.**img_con** :
+    
+    Published:
+    
+        frame/dc (custom message)
+        
+3.**transform** :
+
+    Subscribed:
+        
+        /local_position/pose
+        frame/dc
+        odom   (remapped to /local_position/odom)
+        
+    Published:
+    
+        /setpoint_position/local
+        
+    
+---
